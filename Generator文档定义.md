@@ -24,7 +24,7 @@ Generator模块通过调用OpenAI等LLM的api获得内容生成。核心步骤�
 严格和template.json下面的"output"字段对应。输出的json可供其他模块使用
 
 
-
+``` json
 {
     "generator_id": "generator_0001", 
     "description": "小C智聊微信公众号，根据历史聊天内容和当前用户输入内容，回复用用户文本", # optional
@@ -90,3 +90,4 @@ Generator模块通过调用OpenAI等LLM的api获得内容生成。核心步骤�
         }
     }
 }
+```
