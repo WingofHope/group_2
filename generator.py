@@ -12,9 +12,7 @@ import json
 from collections import defaultdict
 
 
-# openai.api_key = os.getenv("OPENAI_API_KEY")
-# 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     "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"
-openai.api_key = "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" # GPT-4
+openai.api_key = ""
 
 template_file = "/Users/yihou/Documents/projects/ai_agent_23_10/Genrator模块设计/template1.json"
 data_file = "/Users/yihou/Documents/projects/ai_agent_23_10/Genrator模块设计/input1.json"
