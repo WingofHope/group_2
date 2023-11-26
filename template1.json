@@ -6,16 +6,18 @@
     "input": [
         {
             "name": "query1",
+            "type": "string",
             "description": "从process拿到的输入1"
         },  
         {
-            "name": "query2",
-            "description": "从process拿到的输入2"
+            "name": "pic1",
+            "type": "picture",
+            "description": "从process拿到的图片1"
         }   
     ],
     "output": [
         {
-            "name": "content1",
+            "name": "thought",
             "description": "回复给process的内容1",
             "begin": "<a>", 
             "end": "|<o>"
@@ -47,7 +49,7 @@
                 },
                 {
                     "role": "user",
-                    "content": "<b>|<u>${query}|"
+                    "content": "<b>|<u>${query1}..........${query2}|"
                 }
             ],
             "temperature": 0,
