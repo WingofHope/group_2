@@ -1,19 +1,19 @@
 # 一. 概述和目标
-Generator模块通过调用OpenAI等LLM的api获得内容生成。核心步骤：拿取模板 -> 模板填充 -> api调用获得llm输出 -> 返回内容处理
+Generator模块通过调用OpenAI等LM的api获得内容生成。核心步骤：拿取模板 -> 模板填充 -> api调用获得llm输出 -> 返回内容处理
 
 在调度模块处解析并分配好任务之后，Generator模块会拿到1.模板（json）2.填充输入。本模块会将填充输入动态替换到模板相应的位置形成一份完整的LLM输入，通过调用api的形成发送给LLM获得其输出返回内容。之后，本模块会把返回的内容经过模板的要求进行处理，输出一个有众多字段的json文件。
 
 # 二. 涉及文件
 1. template.json
-必要字段：
-"describe"、"input"、"output"、"prompt"、"expect_response"
 
-"describe"：对模板的描述
-"input"：input里面所有的字段都是要被输入填充的
-"output"：通过RE表达式处理LLM的输出，截取所有的output里面字段的内容。其中output下面每一段截取内容必须定义"matching"，代表要截取的开头和结尾
-"prompt"：包含要发送给api的全部讯息，包括"model"、"messages"、"temperature"、"stop"等。注意：这里面的messages是模板，${input}对应上述"input"的字段，即将被input.json的具体内容填充
-"expect_response"：openai的预期返回，帮助提示文工程师进行设计调试
-
+"generator_id" <strong>#required</strong>: 模版编号
+"description"：对模板的描述 
+"author": 提示文工程师的名字,
+"version": 版本号，
+"input" <strong>#required</strong>：一个列表，列表内每一个元素至少都有一个name代表输s入的内容，且name的内容即将填充入模板
+"output" <strong>#required</strong>：通过RE表达式处理LLM的输出，截取所有的output里面字段的内容。其中output下面每一段截取内容必须定义"matching"，代表要截取的开头和结尾 一个列表，列表内每一个元素至少都有一个name代表应输出的内容，至少begin， end字段代表如何从返回的讯息中截取相对应的元素，begin默认是"^",end默认是"$"，分别代表开头和结尾。
+"template" <strong>#required</strong>：包含要通过api发送到LM大模型的全部讯息，包括"lm"代表模型类型（gpt, dalle等），"post_body"是将要发送给模型的全部参数
+"assert"：返回的讯息，比如如何中止
 2. input.json
 严格和template.json下面的"input"字段对应。这部分内容即将被替换到template里面的json中。
 
@@ -26,38 +26,42 @@ Generator模块通过调用OpenAI等LLM的api获得内容生成。核心步骤�
 
 ``` json
 {
-    "generator_id": "generator_0001", 
-    "description": "小C智聊微信公众号，根据历史聊天内容和当前用户输入内容，回复用用户文本", # optional
-    "author": "提示文工程师的名字", # optional
-    "version": "0.0.1", # optional
+    "generator_id": "generator_0001", #required
+    "description": "小C智聊微信公众号，根据历史聊天内容和当前用户输入内容，回复用用户文本",
+    "author": "提示文工程师的名字",
+    "version": "0.0.1",
     "input": [ 
         {
-            "name": "query1",
-            "description": "从process拿到的输入1" # optional
+            "name": "query1", #required
+            "type": "string", // default: string, image_url/file_url/list
+            "description": "从process拿到的输入1"
         },  
         {
-            "name": "query2",
-            "description": "从process拿到的输入2" # optional
+            "name": "query2", #required
+            "type": "string",// default: string, image_url/file_url/list
+            "description": "从process拿到的输入2"
         }   
     ],
     "output": [
         {
-            "name": "content1", 
-            "description": "回复给process的内容1",  # optional
-            "begin": "<a>",
-            "end": "|<o>"
+            "name": "content1", #required
+            "description": "回复给process的内容1", 
+            "type": "string", #required // string/image_url/file_url/list
+            "re": "", // re为主
+            "begin": "<a>", // default: ^
+            "end": "<\a>", // default: $
         },
         {
             "name": "content2",
-            "description": "回复给process的内容2", # optional
+            "description": "回复给process的内容2",
             "begin": "<a>",  
             "end": "|<o>" 
         }
     ],
     "template": {
-        "llm": "gpt",
-        "mode": "chat", # optional
-        "post_body": {
+        "lm": "gpt", #required
+        "mode": "chat",
+        "post_body": { #required
             "model": "gpt-4-1106-preview",
             "messages": [
                 {
@@ -77,17 +81,26 @@ Generator模块通过调用OpenAI等LLM的api获得内容生成。核心步骤�
                     "content": "<b>|<u>${query}|"
                 }
             ],
-            "temperature": 0, # optional
-            "max_tokens": 2048, # optional
-            "top_p": 1, # optional
-            "frequency_penalty": 0.9, # optional
-            "presence_penalty": 0.9, # optional
-            "stop": "<o>" # optional
+            "temperature": 0,
+            "max_tokens": 2048,
+            "top_p": 1,
+            "frequency_penalty": 0.9,
+            "presence_penalty": 0.9,
+            "stop": "<o>"
         },
         "assert": {
-            "finish_reason" : "stop", # optional
-            "choices_length": 1 # optional
+            "finish_reason" : "stop",
+            "choices_length": 1
         }
     }
+    // "template": {
+    //     "lm": "dalle",
+    //     "post_body": {
+    //         "model": "dall-e-3",
+    //         "prompt": "${pic1}",
+    //         "n": 1,
+    //         "size": "1024x1024"
+    //     }
+    // }
 }
 ```
